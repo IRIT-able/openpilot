@@ -113,6 +113,13 @@ class RadarSettingsLayoutMici(NavScroller):
     test_radar_btn.set_click_callback(
       lambda: launch_script("Test Radar", "", "test_radar"))
     test_radar_btn.set_enabled(ui_state.is_offroad)
+    vin_learn_btn = BigButton("vin learn radar", "learn")
+    vin_learn_btn.set_click_callback(
+      lambda: _confirm_then_flash(
+        "slide to\nlearn vin",
+        "VIN Learn Radar", "This will program the radar with the current Donor VIN. Ensure the car is awake.", "scripts.nap.vin_learn_radar",
+      ))
+    vin_learn_btn.set_enabled(ui_state.is_offroad)
 
     self._scroller.add_widgets([
       radar_enabled,
@@ -126,6 +133,7 @@ class RadarSettingsLayoutMici(NavScroller):
       live_radar_btn,
       diagnose_radar_btn,
       test_radar_btn,
+      vin_learn_btn,
     ])
 
   def _radar_offset_label(self) -> str:

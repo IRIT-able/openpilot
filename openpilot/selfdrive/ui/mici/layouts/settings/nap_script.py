@@ -9,6 +9,7 @@ TOOL_BY_MODULE = {
   "scripts.nap.extract_epas": "extract_epas",
   "scripts.nap.flash_epas": "flash_epas",
   "scripts.nap.restore_epas": "restore_epas",
+  "scripts.nap.vin_learn_radar": "vin_learn_radar",
   "calibrate_pedal": "calibrate_pedal",
   "extract_epas": "extract_epas",
   "flash_epas": "flash_epas",
