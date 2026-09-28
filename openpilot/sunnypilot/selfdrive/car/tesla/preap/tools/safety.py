@@ -10,6 +10,7 @@ DESTRUCTIVE_TOOLS = frozenset({
   "calibrate_radar",
   "flash_epas",
   "restore_epas",
+  "vin_learn_radar",
 })
 
 # Pedal calibration may start with ignition on. Other tools stay offroad-only.

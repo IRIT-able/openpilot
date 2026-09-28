@@ -317,7 +317,11 @@ class NAPLayout(Widget):
       lambda: tr("Test Radar"), lambda: tr("TEST"),
       callback=lambda: self._confirm_tool("test_radar"),
     )
-    self._radar_items.extend([self._tool_calibrate_radar, self._tool_diagnose_radar, self._tool_test_radar])
+    self._tool_vin_learn_radar = button_item_sp(
+      lambda: tr("VIN Learn Radar"), lambda: tr("LEARN"),
+      callback=lambda: self._confirm_tool("vin_learn_radar"),
+    )
+    self._radar_items.extend([self._tool_calibrate_radar, self._tool_diagnose_radar, self._tool_test_radar, self._tool_vin_learn_radar])
 
   def _add_toggle(self, param_key, title, description, enabled: bool | Callable[[], bool] | None = None,
                   needs_reboot=False, dest=None):
@@ -467,6 +471,7 @@ class NAPLayout(Widget):
       "calibrate_radar": preap_instructions.CALIBRATE_RADAR_INSTRUCTIONS,
       "diagnose_radar": preap_instructions.DIAGNOSE_RADAR_INSTRUCTIONS,
       "test_radar": preap_instructions.TEST_RADAR_INSTRUCTIONS,
+      "vin_learn_radar": "This will program the radar with the current Donor VIN. Ensure the car is awake.",
       "extract_epas": BACKUP_EPAS_INSTRUCTIONS,
       "flash_epas": FLASH_EPAS_INSTRUCTIONS,
       "restore_epas": RESTORE_EPAS_INSTRUCTIONS,

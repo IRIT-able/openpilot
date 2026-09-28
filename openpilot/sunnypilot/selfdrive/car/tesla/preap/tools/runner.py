@@ -34,6 +34,7 @@ APPROVED_TOOLS = {
   "extract_epas": "openpilot.sunnypilot.selfdrive.car.tesla.preap.tools.extract_epas",
   "flash_epas": "openpilot.sunnypilot.selfdrive.car.tesla.preap.tools.flash_epas",
   "restore_epas": "openpilot.sunnypilot.selfdrive.car.tesla.preap.tools.restore_epas",
+  "vin_learn_radar": "openpilot.sunnypilot.selfdrive.car.tesla.preap.tools.vin_learn_radar",
 }
 
 
