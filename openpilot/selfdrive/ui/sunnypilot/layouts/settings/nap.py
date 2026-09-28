@@ -288,6 +288,12 @@ class NAPLayout(Widget):
     )
     self._radar_items.append(self._read_vin_btn)
 
+    self._tool_vin_learn_radar = button_item_sp(
+      lambda: tr("VIN Learn Radar"), lambda: tr("LEARN"),
+      callback=lambda: self._confirm_tool("vin_learn_radar"),
+    )
+    self._radar_items.append(self._tool_vin_learn_radar)
+
     radar_position = int(self._params.get(NAPParamKeys.RADAR_POSITION, return_default=True) or 0)
     self._radar_position_buttons = multiple_button_item_sp(
       title=lambda: tr("Donor Radar Position"),
@@ -329,11 +335,7 @@ class NAPLayout(Widget):
       lambda: tr("Test Radar"), lambda: tr("TEST"),
       callback=lambda: self._confirm_tool("test_radar"),
     )
-    self._tool_vin_learn_radar = button_item_sp(
-      lambda: tr("VIN Learn Radar"), lambda: tr("LEARN"),
-      callback=lambda: self._confirm_tool("vin_learn_radar"),
-    )
-    self._radar_items.extend([self._tool_calibrate_radar, self._tool_diagnose_radar, self._tool_test_radar, self._tool_vin_learn_radar])
+    self._radar_items.extend([self._tool_calibrate_radar, self._tool_diagnose_radar, self._tool_test_radar])
 
   def _add_toggle(self, param_key, title, description, enabled: bool | Callable[[], bool] | None = None,
                   needs_reboot=False, dest=None):
