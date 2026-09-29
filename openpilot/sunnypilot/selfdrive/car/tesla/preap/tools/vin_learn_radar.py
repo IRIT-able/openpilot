@@ -34,6 +34,8 @@ def tesla_radar_security_access_algorithm(seed_bytes):
 class StandaloneFlasher:
     def __init__(self, vin: str):
         self.vin = vin.ljust(17, '0')[:17].encode('ascii')
+        from openpilot.common.params import Params
+        self.position = int(Params().get("NAPRadarPosition") or 0)
         self.p = Panda()
         self.p.set_safety_mode(17) # SAFETY_ALLOUTPUT
         self.p.can_clear(0xFFFF)
@@ -46,9 +48,13 @@ class StandaloneFlasher:
             # 0x2A9 config
             msg_2a9 = bytearray(8)
             msg_2a9[0] = 0x44 # carConfig (US, no air susp, P85)
+            # Add XWD bit if VIN says AWD (char 8 is '2' or '4')
+            drive = self.vin[7]
+            if drive in [b'2', b'4', ord('2'), ord('4')]:
+                msg_2a9[0] |= 0x08
             msg_2a9[1] = 0x82 # RWD, EPAS type 2
             msg_2a9[2] = 0x20 # AP1, ParkAssist
-            msg_2a9[4] = 0x01 # ForwardRadarHW (Bosch)
+            msg_2a9[4] = 0x01 | (self.position << 4) # ForwardRadarHW (Bosch) + Position
             
             # 0x2B9 VIN
             idx = int(time.time() * 10) % 7
