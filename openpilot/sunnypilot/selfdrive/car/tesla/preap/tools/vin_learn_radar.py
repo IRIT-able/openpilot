@@ -150,12 +150,7 @@ def main():
     flasher = StandaloneFlasher(vin)
     flasher.run()
     
-    # After learning, update position to 1 if it's a facelift VIN
-    if vin[4] in ['B', 'C'] and vin[9] in ['G', 'H', 'J', 'K', 'L', 'M', 'N', 'P', 'R', 'S']:
-        # This is a facelift
-        params.put("NAPRadarPosition", "1")
-    else:
-        params.put("NAPRadarPosition", "0")
+
 
 if __name__ == "__main__":
     main()
