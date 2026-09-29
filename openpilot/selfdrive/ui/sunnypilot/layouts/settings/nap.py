@@ -290,6 +290,7 @@ class NAPLayout(Widget):
 
     self._tool_vin_learn_radar = button_item_sp(
       lambda: tr("VIN Learn Radar"), lambda: tr("LEARN"),
+      description=lambda: tr("Spoofs the CAN bus to program the radar with the Donor VIN. Ensure the car is awake."),
       callback=lambda: self._confirm_tool("vin_learn_radar"),
     )
     self._radar_items.append(self._tool_vin_learn_radar)
