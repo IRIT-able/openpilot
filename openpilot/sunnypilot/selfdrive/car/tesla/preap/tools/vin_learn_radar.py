@@ -35,8 +35,6 @@ class StandaloneFlasher:
     def __init__(self, vin: str):
         self.vin = vin.ljust(17, '0')[:17].encode('ascii')
         self.p = Panda()
-        import cereal.messaging as messaging
-        self.sm = messaging.SubMaster(['can'])
         self.p.set_safety_mode(17) # SAFETY_ALLOUTPUT
         self.p.can_clear(0xFFFF)
         self.running = True
@@ -73,18 +71,16 @@ class StandaloneFlasher:
         
         start = time.monotonic()
         while time.monotonic() - start < timeout:
-            self.sm.update(10)
-            if self.sm.updated['can']:
-                for msg in self.sm['can']:
-                    if msg.src == self.bus and msg.address == RX_ID:
-                        dat = msg.dat
-                        if dat[0] == expected_pci and dat[1] == payload[0] + 0x40:
-                            return dat
-                        # Negative response: 0x03 0x7F [Service] [NRC]
-                        if dat[0] == 0x03 and dat[1] == 0x7F and dat[2] == payload[0]:
-                            if dat[3] == 0x21: # Busy
-                                return b'BUSY'
-                            raise Exception(f"UDS Error: {dat.hex()}")
+            rx = self.p.can_recv()
+            for addr, dat, src in rx:
+                if src == self.bus and addr == RX_ID:
+                    if dat[0] == expected_pci and dat[1] == payload[0] + 0x40:
+                        return dat
+                    # Negative response: 0x03 0x7F [Service] [NRC]
+                    if dat[0] == 0x03 and dat[1] == 0x7F and dat[2] == payload[0]:
+                        if dat[3] == 0x21: # Busy
+                            return b'BUSY'
+                        raise Exception(f"UDS Error: {dat.hex()}")
             time.sleep(0.01)
         raise TimeoutError(f"UDS Request timed out for {bytes(payload).hex()}")
 
