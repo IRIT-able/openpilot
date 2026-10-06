@@ -331,7 +331,7 @@ class SelfdriveD(CruiseHelper):
       self.events.add(EventName.overheat)
     if self.sm['deviceState'].freeSpacePercent < 7 and not SIMULATION:
       self.events.add(EventName.outOfSpace)
-    if self.sm['deviceState'].memoryUsagePercent > 90 and not SIMULATION:
+    if self.sm['deviceState'].memoryUsagePercent > 96 and not SIMULATION:
       self.events.add(EventName.lowMemory)
 
     # Alert if fan isn't spinning for 5 seconds
