@@ -144,3 +144,34 @@ class HudRendererSP(HudRenderer):
     self.turn_signal_controller.render(rect)
     self.circular_alerts_renderer.render(rect)
     self.rocket_fuel.render(rect, ui_state.sm)
+
+    # Auto Brights Indicator
+    if ui_state.sm.alive.get("carState", False) and ui_state.sm.updated.get("carState", False):
+      stalk = getattr(ui_state.sm["carState"], 'napHighBeamStalk', 0)
+      if stalk == 0 or not ui_state.params.get_bool("NAPAutoBrights"):
+        text = "autobrights: neutral-off"
+        color = rl.Color(180, 180, 180, 200)
+      elif stalk == 1:
+        text = "autobrights: on-manual"
+        color = rl.Color(0, 255, 0, 200)
+      else:
+        if ui_state.sm.alive.get("wideRoadCameraState", False) and ui_state.sm.alive.get("carControl", False):
+          exposure = ui_state.sm["wideRoadCameraState"].exposureValPercent
+          is_dark = exposure > 50.0
+          no_lead = not ui_state.sm["carControl"].hudControl.leadVisible
+          moving_fast = ui_state.sm["carState"].vEgo > 10.0
+          if is_dark and no_lead and moving_fast:
+            text = "autobrights: on-auto"
+            color = rl.Color(0, 255, 0, 200)
+          else:
+            text = "autobrights: armed"
+            color = rl.Color(255, 255, 0, 200)
+        else:
+          text = "autobrights: armed"
+          color = rl.Color(255, 255, 0, 200)
+
+      # Draw at bottom center
+      import openpilot.system.ui.lib.application as application
+      font = gui_app.font(application.FontWeight.MEDIUM)
+      pos = rl.Vector2(rect.x + rect.width / 2 - 150, rect.y + rect.height - 180)
+      rl.draw_text_ex(font, text, pos, 35, 0, color)
