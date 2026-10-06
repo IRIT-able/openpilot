@@ -151,7 +151,7 @@ class HudRendererSP(HudRenderer):
       if stalk == 0 or not ui_state.params.get_bool("NAPAutoBrights"):
         text = "autobrights: neutral-off"
         color = rl.Color(180, 180, 180, 200)
-      elif stalk == 1:
+      elif stalk == 2:
         text = "autobrights: on-manual"
         color = rl.Color(0, 255, 0, 200)
       else:
