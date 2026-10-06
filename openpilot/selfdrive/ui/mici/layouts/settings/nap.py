@@ -227,6 +227,7 @@ class NAPLayoutMici(NavScroller):
     pedal_enabled.set_enabled(ui_state.is_offroad)
 
     adaptive_accel = BigParamControl("adaptive accel limits", NAPParamKeys.ADAPTIVE_ACCEL)
+    auto_brights = BigParamControl("auto brights", NAPParamKeys.AUTO_BRIGHTS)
 
     # Next drive: frozen into safetyParam at interface init, like BIG TeslaSettings.
     hands_on_pause = BigParamControl("hands-on pause", "TeslaPreapHandsOnPause")
@@ -307,6 +308,7 @@ class NAPLayoutMici(NavScroller):
     self._scroller.add_widgets([
       pedal_enabled,
       adaptive_accel,
+      auto_brights,
       hands_on_pause,
       hands_on_level,
       pedal_can_bus,
