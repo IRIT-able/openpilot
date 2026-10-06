@@ -174,4 +174,11 @@ class HudRendererSP(HudRenderer):
       import openpilot.system.ui.lib.application as application
       font = gui_app.font(application.FontWeight.MEDIUM)
       pos = rl.Vector2(rect.x + rect.width / 2 - 150, rect.y + rect.height - 180)
+      
+      # Black outline for readability
+      outline_color = rl.Color(0, 0, 0, 255)
+      for dx, dy in [(-2, -2), (-2, 2), (2, -2), (2, 2), (-2, 0), (2, 0), (0, -2), (0, 2)]:
+        rl.draw_text_ex(font, text, rl.Vector2(pos.x + dx, pos.y + dy), 35, 0, outline_color)
+      
+      # Main text
       rl.draw_text_ex(font, text, pos, 35, 0, color)
