@@ -115,6 +115,8 @@ class NAPLayout(Widget):
                      enabled=ui_state.is_offroad, needs_reboot=True)
     self._add_toggle(NAPParamKeys.ADAPTIVE_ACCEL, tr("Adaptive Accel Limits"),
                      tr("Reduces acceleration authority when close to a lead car to prevent overshoot."))
+    self._add_toggle(NAPParamKeys.AUTO_BRIGHTS, tr("Auto Brights"),
+                     tr("Automatically toggle high beams when dark and no lead car is present."))
     follow_dist = int(self._params.get(NAPParamKeys.FOLLOW_DISTANCE, return_default=True) or 4)
     self._follow_buttons = multiple_button_item_sp(
       title=lambda: tr("Follow Distance"),

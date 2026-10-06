@@ -23,6 +23,7 @@ DEFAULTS = {
   NAPParamKeys.IBOOSTER_ENABLED: False,
   NAPParamKeys.BRAKE_FACTOR: 1.0,
   NAPParamKeys.FORCE_PRE_AP: True,
+  NAPParamKeys.AUTO_BRIGHTS: False,
 }
 
 # Preset values for float/int params exposed as multiple-button selectors.
