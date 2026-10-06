@@ -180,30 +180,56 @@ class HudRenderer(Widget):
     self._draw_steering_wheel(rect)
 
     # Auto Brights Indicator
-    if ui_state.sm.alive.get("carState", False) and ui_state.sm.updated.get("carState", False):
+    text = None
+    color = rl.Color(255, 255, 255, 200)
+    
+    if not (ui_state.sm.alive.get("carState", False) and ui_state.sm.updated.get("carState", False)):
+      text = "autobrights: carState dead"
+      color = rl.Color(255, 0, 0, 255)
+    else:
       stalk = getattr(ui_state.sm["carState"], 'napHighBeamStalk', 0)
-      if stalk == 0 or not ui_state.params.get_bool("NAPAutoBrights"):
-        text = "autobrights: neutral-off"
-        color = rl.Color(180, 180, 180, 200)
-      elif stalk == 2:
+      if stalk == 2:
         text = "autobrights: on-manual"
         color = rl.Color(0, 255, 0, 200)
+      elif stalk == 1 and not ui_state.params.get_bool("NAPAutoBrights"):
+        text = "autobrights: on-manual"
+        color = rl.Color(0, 255, 0, 200)
+      elif not ui_state.params.get_bool("NAPAutoBrights"):
+        text = "autobrights: neutral-off"
+        color = rl.Color(180, 180, 180, 200)
       else:
-        if ui_state.sm.alive.get("wideRoadCameraState", False) and ui_state.sm.alive.get("carControl", False):
-          exposure = ui_state.sm["wideRoadCameraState"].exposureValPercent
-          is_dark = exposure > 50.0
-          no_lead = not ui_state.sm["carControl"].hudControl.leadVisible
-          moving_fast = ui_state.sm["carState"].vEgo > 10.0
-          if is_dark and no_lead and moving_fast:
-            text = "autobrights: on-auto"
-            color = rl.Color(0, 255, 0, 200)
+        try:
+          if ui_state.sm.alive.get("wideRoadCameraState", False) and ui_state.sm.alive.get("carControl", False):
+            exposure = ui_state.sm["wideRoadCameraState"].exposureValPercent
+            
+            if not hasattr(self, "_is_dark"):
+              self._is_dark = exposure > 50.0
+              
+            if not self._is_dark and exposure > 60.0:
+              self._is_dark = True
+            elif self._is_dark and exposure < 20.0:
+              self._is_dark = False
+              
+            no_lead = not ui_state.sm["carControl"].hudControl.leadVisible
+            moving_fast = True
+            
+            if stalk == 1:
+              text = "autobrights: strobe-warning"
+              color = rl.Color(255, 165, 0, 200)
+            elif self._is_dark and no_lead and moving_fast:
+              text = "autobrights: on-auto"
+              color = rl.Color(0, 255, 0, 200)
+            else:
+              text = "autobrights: armed"
+              color = rl.Color(255, 255, 0, 200)
           else:
-            text = "autobrights: armed"
+            text = "autobrights: waiting..."
             color = rl.Color(255, 255, 0, 200)
-        else:
-          text = "autobrights: armed"
-          color = rl.Color(255, 255, 0, 200)
+        except Exception as e:
+          text = f"ERR: {str(e)}"
+          color = rl.Color(255, 0, 0, 255)
 
+    if text:
       # Draw at bottom center
       import openpilot.system.ui.lib.application as application
       font = gui_app.font(application.FontWeight.MEDIUM)
