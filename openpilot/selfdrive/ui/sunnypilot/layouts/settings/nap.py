@@ -227,17 +227,6 @@ class NAPLayout(Widget):
     self._add_toggle(NAPParamKeys.RADAR_ENABLED, tr("Radar Enabled"),
                      tr("Enable the stock Bosch radar for lead car detection. Requires reboot."),
                      enabled=ui_state.is_offroad, needs_reboot=True, dest=self._radar_items)
-    def on_upside_down(state):
-      from opendbc.car.tesla.preap.nap_conf import nap_conf
-      nap_conf.radar_upside_down = state
-
-    from opendbc.car.tesla.preap.nap_conf import nap_conf
-    self._radar_items.append(toggle_item_sp(
-      tr("Invert Radar Orientation (Upside Down)"),
-      tr("Flip the radar's left/right axis. Use this if your radar is mounted upside down."),
-      initial_state=nap_conf.radar_upside_down,
-      callback=on_upside_down,
-    ))
 
     self._add_toggle(NAPParamKeys.RADAR_IGNORE_HW_FAIL, tr("Ignore radar hardware fail"),
                      tr("Let's you engage when Bosch raises HWFail even though tracks are still live."),
