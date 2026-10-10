@@ -161,7 +161,7 @@ class SelfdriveD(CruiseHelper):
     self.prev_preap_chimes = PreAPChimeState()
     self.preap_regen_demand = RegenDemandCheck()
 
-    self.ignored_processes = {'mapd', }
+    self.ignored_processes = {'''qcomgpsd''', 'mapd', }
 
     # Determine startup event
     is_remote = build_metadata.openpilot.comma_remote or build_metadata.openpilot.sunnypilot_remote
