@@ -39,6 +39,7 @@ DEFAULT_CONFIG = {
   'radar_donor_vin': '',
   'radar_epas_type': 0,
   'radar_position': 0,
+  'radar_upside_down': False,
 }
 
 
@@ -133,6 +134,15 @@ class NAPConf:
       pass
 
   def _get(self, key, default):
+    try:
+      if os.path.exists(CONFIG_FILE):
+        mtime = os.path.getmtime(CONFIG_FILE)
+        if getattr(self, "_last_mtime", 0) != mtime:
+          self._last_mtime = mtime
+          with open(CONFIG_FILE) as f:
+            self._cache.update(json.load(f))
+    except Exception:
+      pass
     return self._cache.get(key, default)
 
   def _put(self, key, value):

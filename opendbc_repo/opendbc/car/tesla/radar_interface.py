@@ -279,6 +279,6 @@ class RadarInterface(RadarInterfaceBase):
       y_rel=-(msg_a['LatDist'] + self.radar_offset) if (nap_conf is not None and getattr(nap_conf, 'radar_upside_down', False)) else (msg_a['LatDist'] + self.radar_offset),
       v_rel=msg_a['LongSpeed'],
       a_rel=msg_a['LongAccel'],
-      yv_rel=msg_b['LatSpeed'],
+      yv_rel=-msg_b['LatSpeed'] if (nap_conf is not None and getattr(nap_conf, 'radar_upside_down', False)) else msg_b['LatSpeed'],
       measured=bool(msg_a['Meas']),
     )
