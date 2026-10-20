@@ -54,3 +54,13 @@ def test_nmea_mia_clears_fix():
   state = TeslaGpsState()
   state.update(UI_GPS_VEHICLE_SPEED, _speed_frame(0., 50., mia=1), 0)
   assert not _fill(state, 100_000_000).hasFix
+
+
+def test_fractional_unix_time():
+  # time.time() * 1e3 is fractional; capnp UInt64 fields raise on non-integral floats
+  state = TeslaGpsState()
+  loc = state.update(MCU_LOCATION_STATUS, LOCATION, 1_000_000_000)
+  assert loc is not None
+  msg = messaging.new_message('gpsLocation', valid=True)
+  state.fill(msg.gpsLocation, loc, 1_000_000_000, 1792496529390.7412)
+  assert msg.gpsLocation.unixTimestampMillis == 1792496529390

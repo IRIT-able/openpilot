@@ -82,7 +82,7 @@ class TeslaGpsState:
     gps.verticalAccuracy = max(2. * loc.accuracy, 1.)
     gps.speedAccuracy = SPEED_ACCURACY
     gps.bearingAccuracyDeg = BEARING_ACCURACY if moving else 180.
-    gps.unixTimestampMillis = unix_time_ms
+    gps.unixTimestampMillis = int(unix_time_ms)  # UInt64: capnp rejects fractional floats
     gps.source = log.GpsLocationData.SensorSource.car
     gps.hasFix = location_has_fix(loc, gps_speed)
 
@@ -111,7 +111,7 @@ def main() -> None:
         if loc is None:
           continue
         gps_msg = messaging.new_message('gpsLocation', valid=True)
-        state.fill(gps_msg.gpsLocation, loc, msg.logMonoTime, time.time() * 1e3)
+        state.fill(gps_msg.gpsLocation, loc, msg.logMonoTime, int(time.time() * 1e3))
         pm.send('gpsLocation', gps_msg)
 
 
