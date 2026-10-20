@@ -78,6 +78,20 @@ class CreditsBlock(Widget):
     self._html.render(html_rect)
 
 
+GPS_SOURCE_VALUES = ["comma", "tesla"]
+
+# Index order matches SpeedLimitPolicy (car_state_only, map_data_only, car_state_priority, map_data_priority, combined).
+# On Pre-AP "car" is the MCU navigation map limit and "map" is the comma's offline OpenStreetMap data.
+SPEED_LIMIT_SOURCE_BUTTONS = [lambda: tr("Tesla"), lambda: tr("OSM"), lambda: tr("Tesla 1st"), lambda: tr("OSM 1st"), lambda: tr("Both")]
+SPEED_LIMIT_SOURCE_DESCRIPTIONS = [
+  lambda: tr("Tesla: use only the speed limit from the Tesla's navigation maps (CAN)."),
+  lambda: tr("OSM: use only the comma's downloaded OpenStreetMap speed limits."),
+  lambda: tr("Tesla 1st: use the Tesla speed limit, fall back to OpenStreetMap when the Tesla has none."),
+  lambda: tr("OSM 1st: use OpenStreetMap, fall back to the Tesla speed limit when OSM has none."),
+  lambda: tr("Both: combine Tesla and OpenStreetMap speed limits."),
+]
+
+
 def parse_configured_pedal_bus(value) -> int:
   if value in (None, "", b""):
     return 2
@@ -153,6 +167,30 @@ class NAPLayout(Widget):
     )
     self._main_items.append(self._radar_settings_btn)
     self._build_radar_items()
+
+    self._main_items.append(SectionHeader(tr("GPS & Speed Limits")))
+    from opendbc.car.tesla.preap.nap_conf import nap_conf
+    self._gps_source_buttons = multiple_button_item_sp(
+      title=lambda: tr("GPS Source"),
+      description=lambda: tr(
+        "Comma: the comma device's built-in GPS. Tesla: the car's navigation GPS read from CAN, "
+        + "usually faster to fix and more accurate. Feeds localization and OSM speed limits. Change while offroad."
+      ),
+      buttons=[lambda: tr("Comma"), lambda: tr("Tesla")],
+      button_width=170,
+      selected_index=GPS_SOURCE_VALUES.index(nap_conf.gps_source),
+      callback=self._on_gps_source,
+    )
+    self._gps_source_buttons.action_item.set_enabled(ui_state.is_offroad)
+    self._main_items.append(self._gps_source_buttons)
+    self._speed_limit_source_buttons = multiple_button_item_sp(
+      title=lambda: tr("Speed Limit Source"),
+      description=self._get_speed_limit_source_description,
+      buttons=SPEED_LIMIT_SOURCE_BUTTONS,
+      button_width=170,
+      param="SpeedLimitPolicy",
+    )
+    self._main_items.append(self._speed_limit_source_buttons)
 
     self._main_items.append(SectionHeader(tr("iBooster / Braking")))
     self._add_toggle(NAPParamKeys.IBOOSTER_ENABLED, tr("iBooster Enabled"),
@@ -350,6 +388,20 @@ class NAPLayout(Widget):
     self._params.put(NAPParamKeys.PEDAL_CAN_BUS, PEDAL_CAN_BUS_VALUES[index])
     self._show_reboot_modal()
 
+  def _on_gps_source(self, index: int):
+    from opendbc.car.tesla.preap.nap_conf import nap_conf
+    nap_conf.gps_source = GPS_SOURCE_VALUES[index]
+
+  def _get_speed_limit_source_index(self) -> int:
+    try:
+      policy = int(self._params.get("SpeedLimitPolicy", return_default=True))
+    except (TypeError, ValueError):
+      return 0
+    return max(0, min(len(SPEED_LIMIT_SOURCE_BUTTONS) - 1, policy))
+
+  def _get_speed_limit_source_description(self) -> str:
+    return SPEED_LIMIT_SOURCE_DESCRIPTIONS[self._get_speed_limit_source_index()]()
+
   def _on_brake_factor(self, index: int):
     self._params.put(NAPParamKeys.BRAKE_FACTOR, BRAKE_FACTOR_PRESETS[index])
 
@@ -536,6 +588,9 @@ class NAPLayout(Widget):
     self._follow_buttons.action_item.set_selected_button(max(0, min(6, follow_dist - 1)))
     self._pedal_bus_buttons.action_item.set_selected_button(
       pedal_bus_selector_index(self._params.get(NAPParamKeys.PEDAL_CAN_BUS)))
+    from opendbc.car.tesla.preap.nap_conf import nap_conf
+    self._gps_source_buttons.action_item.set_selected_button(GPS_SOURCE_VALUES.index(nap_conf.gps_source))
+    self._speed_limit_source_buttons.action_item.set_selected_button(self._get_speed_limit_source_index())
     brake_factor = self._params.get(NAPParamKeys.BRAKE_FACTOR, return_default=True)
     self._brake_factor_buttons.action_item.set_selected_button(
       find_preset_index(BRAKE_FACTOR_PRESETS, brake_factor))

@@ -10,6 +10,7 @@ from openpilot.system.manager.process import PythonProcess, NativeProcess, Daemo
 from openpilot.common.hardware.hw import Paths
 
 from openpilot.sunnypilot.mapd.mapd_manager import MAPD_PATH
+from opendbc.car.tesla.preap.nap_conf import nap_conf
 
 from openpilot.sunnypilot.models.helpers import get_active_model_runner
 from openpilot.sunnypilot.sunnylink.utils import sunnylink_need_register, sunnylink_ready, use_sunnylink_uploader
@@ -53,8 +54,15 @@ def lat_maneuver(started: bool, params: Params, CP: car.CarParams) -> bool:
 def not_long_maneuver(started: bool, params: Params, CP: car.CarParams) -> bool:
   return started and not params.get_bool("LongitudinalManeuverMode")
 
+def tesla_gps_selected(CP: car.CarParams) -> bool:
+  # Pre-AP MCU GPS on CAN replaces the modem GPS (consumers read gpsLocation, so not on ublox devices)
+  return CP.brand == "tesla" and not ublox_available() and nap_conf.gps_source == "tesla"
+
 def qcomgps(started: bool, params: Params, CP: car.CarParams) -> bool:
-  return started and not ublox_available()
+  return started and not ublox_available() and not tesla_gps_selected(CP)
+
+def teslagps(started: bool, params: Params, CP: car.CarParams) -> bool:
+  return started and tesla_gps_selected(CP)
 
 def always_run(started: bool, params: Params, CP: car.CarParams) -> bool:
   return True
@@ -145,6 +153,7 @@ procs = [
   PythonProcess("deleter", "openpilot.system.loggerd.deleter", always_run),
   PythonProcess("dmonitoringd", "openpilot.selfdrive.monitoring.dmonitoringd", driverview, enabled=(WEBCAM or not PC)),
   PythonProcess("qcomgpsd", "openpilot.system.qcomgpsd.qcomgpsd", qcomgps, enabled=TICI),
+  PythonProcess("teslagpsd", "openpilot.sunnypilot.selfdrive.car.tesla.preap.teslagpsd", teslagps, enabled=TICI),
   PythonProcess("pandad", "openpilot.selfdrive.pandad.pandad", always_run),
   PythonProcess("paramsd", "openpilot.selfdrive.locationd.paramsd", only_onroad),
   PythonProcess("lagd", "openpilot.selfdrive.locationd.lagd", only_onroad),

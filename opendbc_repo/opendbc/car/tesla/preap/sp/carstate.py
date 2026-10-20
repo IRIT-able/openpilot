@@ -2,7 +2,7 @@ import os
 from opendbc.can import CANDefine
 from opendbc.car import Bus, structs
 from opendbc.car.interfaces import CarStateBase
-from opendbc.car.tesla.preap.carstate import get_preap_can_parsers, update_preap
+from opendbc.car.tesla.preap.carstate import get_preap_can_parsers, preap_speed_limit, update_preap
 from opendbc.car.tesla.preap.engagement import PreAPEngagement
 from opendbc.car.tesla.preap.nap_conf import nap_conf
 from opendbc.car.tesla.preap.pedal_feedback import PedalFeedback
@@ -244,6 +244,7 @@ class PreAPCarState(CarStateBase):
     ret.brakePressed = bool(self.real_brake_pressed)
     ret.handsOnLevel = int(self.hands_on_level)
     ret_sp = structs.CarStateSP()
+    ret_sp.speedLimit = preap_speed_limit(can_parsers[Bus.chassis])
     self._publish_mads_intent(ret_sp, ret)
     return ret, ret_sp
 

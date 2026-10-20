@@ -40,7 +40,10 @@ DEFAULT_CONFIG = {
   'radar_epas_type': 0,
   'radar_position': 0,
   'radar_upside_down': False,
+  'gps_source': 'comma',
 }
+
+GPS_SOURCES = ('comma', 'tesla')
 
 
 def normalize_radar_donor_vin(value):
@@ -354,6 +357,16 @@ class NAPConf:
   @radar_upside_down.setter
   def radar_upside_down(self, value):
     self._put('radar_upside_down', bool(value))
+
+  @property
+  def gps_source(self):
+    """'comma' = modem GPS (qcomgpsd), 'tesla' = MCU GPS from CAN (teslagpsd)."""
+    value = self._get('gps_source', 'comma')
+    return value if value in GPS_SOURCES else 'comma'
+
+  @gps_source.setter
+  def gps_source(self, value):
+    self._put('gps_source', value if value in GPS_SOURCES else 'comma')
 
   @property
   def pedal_calib_min(self):

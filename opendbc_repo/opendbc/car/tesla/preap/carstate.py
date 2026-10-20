@@ -8,6 +8,7 @@ from opendbc.car.common.conversions import Conversions as CV
 from opendbc.car.tesla.values import DBC, CANBUS, GEAR_MAP, STEER_THRESHOLD
 from opendbc.car.tesla.preap.nap_params import NAPParamKeys
 from opendbc.car.tesla.preap.nap_conf import nap_conf, PEDAL_DI_PRESSED
+from opendbc.car.tesla.preap.tesla_gps import mpp_speed_limit_ms
 
 try:
   from openpilot.common.params import Params as _NAPParams
@@ -18,6 +19,8 @@ except ImportError:
 # Pre-AP door signal names from GTW_carState
 _DOORS = ("DOOR_STATE_FL", "DOOR_STATE_FR", "DOOR_STATE_RL", "DOOR_STATE_RR", "DOOR_STATE_FrontTrunk", "BOOT_STATE")
 HANDS_ON_DISENGAGE_LEVEL = 2
+# UI_gpsVehicleSpeed is ~1 Hz; drop the MCU map speed limit if it goes quiet
+SPEED_LIMIT_TIMEOUT_NS = 3_000_000_000
 
 
 def _current_time_millis():
@@ -199,10 +202,21 @@ def update_preap(cs, can_parsers):
   return ret
 
 
+def preap_speed_limit(cp_chassis) -> float:
+  """MCU navigation map speed limit (UI_mppSpeedLimit) in m/s, 0 when unknown or stale."""
+  ts = cp_chassis.ts_nanos["UI_gpsVehicleSpeed"]["UI_mppSpeedLimit"]
+  if ts == 0 or (cp_chassis.last_nonempty_nanos - ts) > SPEED_LIMIT_TIMEOUT_NS:
+    return 0.
+  msg = cp_chassis.vl["UI_gpsVehicleSpeed"]
+  return mpp_speed_limit_ms(int(round(msg["UI_mppSpeedLimit"] / 5)), msg["UI_mapSpeedLimitUnits"] == 1)
+
+
 def get_preap_can_parsers(CP):
   chassis_messages = [
     ("ESP_B", 0), ("BrakeMessage", 0), ("DI_state", 0), ("DI_torque2", 0),
     ("GTW_carState", 0), ("STW_ANGLHP_STAT", 0), ("EPAS_sysStatus", 0), ("STW_ACTN_RQ", 0),
+    # MCU map speed limit; optional so a missing MCU never invalidates CAN
+    ("UI_gpsVehicleSpeed", math.nan),
   ]
   pt_messages = [("DI_torque1", 0), ("ESP_B", 0)]
   party_messages = [("ESP_B", 0)]
