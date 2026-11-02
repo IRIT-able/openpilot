@@ -26,7 +26,7 @@ BAR_DIM = rl.Color(255, 255, 255, 50)
 
 def follow_level_from_t_follow(t_follow: float) -> int | None:
   for i, t in enumerate(NAP_T_FOLLOW):
-    if abs(t_follow - t) < 0.05:
+    if abs(t_follow - t) < 0.02:  # personality defaults (1.25/1.45/1.75 s) must not match
       return i + 1
   return None
 
