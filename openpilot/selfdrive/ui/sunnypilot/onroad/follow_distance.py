@@ -1,10 +1,12 @@
 """NAP follow distance badge, drawn under the MAX set speed box on Pre-AP Teslas.
 
-Shows the follow distance the planner is actually using (longitudinalPlan.tFollow),
-so a dial change is confirmed once plannerd has picked it up.
+Reads NAPFollowDistance directly (~10 Hz) so a dial or settings change shows up
+as soon as it is stored; plannerd picks the same value up within 0.25 s.
 """
 import pyray as rl
 
+from opendbc.car.tesla.preap.nap_params import NAPParamKeys
+from openpilot.common.params import Params
 from openpilot.selfdrive.ui.onroad.hud_renderer import UI_CONFIG, COLORS
 from openpilot.selfdrive.ui.ui_state import ui_state, UIStatus
 from openpilot.system.ui.lib.application import gui_app, FontWeight
@@ -12,9 +14,8 @@ from openpilot.system.ui.lib.multilang import tr
 from openpilot.system.ui.lib.text_measure import measure_text_cached
 from openpilot.system.ui.widgets import Widget
 
-# Must match NAP_T_FOLLOW in longitudinal_mpc_lib/long_mpc.py (not imported: it pulls in acados)
-NAP_T_FOLLOW = (0.7, 0.9, 1.1, 1.3, 1.5, 1.7, 1.9)
-LEVELS = len(NAP_T_FOLLOW)
+LEVELS = 7
+POLL_HZ = 10
 HIGHLIGHT_S = 2.0
 
 BOX_HEIGHT = 96
@@ -24,17 +25,12 @@ BAR_GAP = 6
 BAR_DIM = rl.Color(255, 255, 255, 50)
 
 
-def follow_level_from_t_follow(t_follow: float) -> int | None:
-  for i, t in enumerate(NAP_T_FOLLOW):
-    if abs(t_follow - t) < 0.02:  # personality defaults (1.25/1.45/1.75 s) must not match
-      return i + 1
-  return None
-
-
 class FollowDistanceRenderer(Widget):
   def __init__(self):
     super().__init__()
     self.level: int | None = None
+    self._params = Params()
+    self._poll_frame = 0
     self._highlight_frames = 0
     self._font = gui_app.font(FontWeight.SEMI_BOLD)
 
@@ -44,10 +40,12 @@ class FollowDistanceRenderer(Widget):
       self.level = None
       return
 
-    sm = ui_state.sm
-    if sm.updated["longitudinalPlan"]:
-      level = follow_level_from_t_follow(sm["longitudinalPlan"].tFollow)
-      if level is not None and self.level is not None and level != self.level:
+    self._poll_frame += 1
+    if self.level is None or self._poll_frame >= gui_app.target_fps // POLL_HZ:
+      self._poll_frame = 0
+      level = int(self._params.get(NAPParamKeys.FOLLOW_DISTANCE, return_default=True) or 4)
+      level = max(1, min(LEVELS, level))
+      if self.level is not None and level != self.level:
         self._highlight_frames = int(HIGHLIGHT_S * gui_app.target_fps)
       self.level = level
 

@@ -164,9 +164,9 @@ class TestPreAPCarStateUpdate(unittest.TestCase):
       dial(100, 1.2)  # rolled through 2-3 to 4, then held
       dial(66, 1.3)
       dial(100, 1.4)
-      dial(100, 1.6)
+      dial(100, 1.5)
       params.put.assert_not_called()
-      dial(100, 1.8)
+      dial(100, 1.6)
       params.put.assert_called_once_with("NAPFollowDistance", 4)
 
       dial(100, 2.5)

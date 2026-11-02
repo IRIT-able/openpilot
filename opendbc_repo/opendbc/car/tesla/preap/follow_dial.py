@@ -3,13 +3,13 @@
 The dial reports an absolute position on every frame, including at rest, so the
 first position seen after startup is only recorded: the NAP setting is changed
 only when the driver actually moves the dial. A new position must hold for
-DEBOUNCE_NS before it is committed, so rolling through several detents gives
-one write instead of one per intermediate value.
+DEBOUNCE_NS before it is committed, so rolling through several detents
+quickly gives one write instead of one per intermediate value.
 """
 
 # DBC VAL_ table for DTR_Dist_Rq (255 = SNA)
 DTR_DIST_TO_FOLLOW = {0: 1, 33: 2, 66: 3, 100: 4, 133: 5, 166: 6, 200: 7}
-DEBOUNCE_NS = 300_000_000
+DEBOUNCE_NS = 180_000_000  # same position on 3 consecutive 10 Hz frames, with jitter margin
 
 
 class FollowDistanceDial:
