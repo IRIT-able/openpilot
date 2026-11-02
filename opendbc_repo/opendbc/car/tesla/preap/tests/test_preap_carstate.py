@@ -149,6 +149,31 @@ class TestPreAPCarStateUpdate(unittest.TestCase):
         CS = CI.update(packets)
         self.assertEqual(CS.turnSignalStalkState, expected)
 
+  def test_follow_dial_writes_only_settled_driver_changes(self):
+    CI = self._make_interface()
+
+    def dial(dtr_dist, t_s):
+      address, dat, bus = CANPacker("tesla_preap").make_can_msg("STW_ACTN_RQ", 0, {"DTR_Dist_Rq": dtr_dist})
+      CI.update([(int(t_s * 1e9), [CanData(address, dat, bus)])])
+
+    with patch("opendbc.car.tesla.preap.carstate._nap_params") as params:
+      dial(0, 1.0)  # resting position at startup must not override the NAP setting
+      dial(0, 1.1)
+      params.put.assert_not_called()
+
+      dial(100, 1.2)  # rolled through 2-3 to 4, then held
+      dial(66, 1.3)
+      dial(100, 1.4)
+      dial(100, 1.6)
+      params.put.assert_not_called()
+      dial(100, 1.8)
+      params.put.assert_called_once_with("NAPFollowDistance", 4)
+
+      dial(100, 2.5)
+      dial(255, 2.6)  # SNA
+      dial(255, 3.0)
+      params.put.assert_called_once()
+
   def test_internal_brake_signal_ors_both_raw_sources_while_public_signal_stays_suppressed(self):
     CI = self._make_interface()
 

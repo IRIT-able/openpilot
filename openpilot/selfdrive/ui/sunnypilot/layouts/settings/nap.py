@@ -112,6 +112,7 @@ class NAPLayout(Widget):
     self._radar_scroller = Scroller(self._radar_items, line_separator=True, spacing=0)
     self._radar_back_btn = Button(tr("Back"), click_callback=self._close_radar)
     self._radar_back_btn.set_rect(rl.Rectangle(0, 0, 220, 90))
+    self._follow_poll_frame = 0
 
   def _build_items(self):
     self._main_items = []
@@ -576,16 +577,30 @@ class NAPLayout(Widget):
     else:
       self._scroller.render(rect)
 
+  def _update_state(self):
+    # The SCCM follow dial writes NAPFollowDistance while onroad; follow it live (~2 Hz)
+    if self._page != "main" or not ui_state.started:
+      return
+    self._follow_poll_frame += 1
+    if self._follow_poll_frame >= gui_app.target_fps // 2:
+      self._follow_poll_frame = 0
+      self._refresh_follow_distance()
+
   def show_event(self):
     self._page = "main"
     self._scroller.show_event()
     self._refresh_toggles()
 
+  def _refresh_follow_distance(self):
+    follow_dist = int(self._params.get(NAPParamKeys.FOLLOW_DISTANCE, return_default=True) or 4)
+    index = max(0, min(6, follow_dist - 1))
+    if self._follow_buttons.action_item.get_selected_button() != index:
+      self._follow_buttons.action_item.set_selected_button(index)
+
   def _refresh_toggles(self):
     for key, item in self._toggle_map.items():
       item.action_item.set_state(self._params.get_bool(key))
-    follow_dist = int(self._params.get(NAPParamKeys.FOLLOW_DISTANCE, return_default=True) or 4)
-    self._follow_buttons.action_item.set_selected_button(max(0, min(6, follow_dist - 1)))
+    self._refresh_follow_distance()
     self._pedal_bus_buttons.action_item.set_selected_button(
       pedal_bus_selector_index(self._params.get(NAPParamKeys.PEDAL_CAN_BUS)))
     from opendbc.car.tesla.preap.nap_conf import nap_conf

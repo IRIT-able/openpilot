@@ -120,14 +120,12 @@ def update_preap(cs, can_parsers):
   cs.cruise_buttons = int(cp_chassis.vl["STW_ACTN_RQ"]["SpdCtrlLvr_Stat"])
   cs.msg_stw_actn_req = copy.copy(cp_chassis.vl["STW_ACTN_RQ"])
 
-  # Follow distance dial
+  # Follow distance dial: only a driver-moved, settled position overrides the NAP setting
   if _nap_params is not None:
-    dtr_dist = int(cp_chassis.vl["STW_ACTN_RQ"]["DTR_Dist_Rq"])
-    if dtr_dist != 255:  # 255 = SNA
-      stalk_follow = min((dtr_dist // 33) + 1, 7)
-      if stalk_follow != cs.prev_stalk_follow:
-        _nap_params.put(NAPParamKeys.FOLLOW_DISTANCE, stalk_follow)
-        cs.prev_stalk_follow = stalk_follow
+    dial_follow = cs.follow_dial.update(int(cp_chassis.vl["STW_ACTN_RQ"]["DTR_Dist_Rq"]),
+                                        cp_chassis.ts_nanos["STW_ACTN_RQ"]["DTR_Dist_Rq"])
+    if dial_follow is not None:
+      _nap_params.put(NAPParamKeys.FOLLOW_DISTANCE, dial_follow)
 
   curr_time_ms = _current_time_millis()
   use_pedal = nap_conf.use_pedal

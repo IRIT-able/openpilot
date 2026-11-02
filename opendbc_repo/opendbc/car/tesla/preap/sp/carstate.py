@@ -4,6 +4,7 @@ from opendbc.car import Bus, structs
 from opendbc.car.interfaces import CarStateBase
 from opendbc.car.tesla.preap.carstate import get_preap_can_parsers, preap_speed_limit, update_preap
 from opendbc.car.tesla.preap.engagement import PreAPEngagement
+from opendbc.car.tesla.preap.follow_dial import FollowDistanceDial
 from opendbc.car.tesla.preap.nap_conf import nap_conf
 from opendbc.car.tesla.preap.pedal_feedback import PedalFeedback
 from opendbc.car.tesla.preap.carstate import HANDS_ON_DISENGAGE_LEVEL
@@ -75,7 +76,7 @@ class PreAPCarState(CarStateBase):
     self.cruise_buttons = 0
     self.prev_cruise_buttons = 0
     self.msg_stw_actn_req = None
-    self.prev_stalk_follow = 0
+    self.follow_dial = FollowDistanceDial()
     self.speed_units = "MPH"
 
     self.engagement = PreAPEngagement(
