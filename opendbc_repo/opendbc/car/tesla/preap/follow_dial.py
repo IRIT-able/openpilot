@@ -9,7 +9,7 @@ quickly gives one write instead of one per intermediate value.
 
 # DBC VAL_ table for DTR_Dist_Rq (255 = SNA)
 DTR_DIST_TO_FOLLOW = {0: 1, 33: 2, 66: 3, 100: 4, 133: 5, 166: 6, 200: 7}
-DEBOUNCE_NS = 180_000_000  # same position on 3 consecutive 10 Hz frames, with jitter margin
+DEBOUNCE_NS = 50_000_000  # at 10 Hz: same position on 2 consecutive frames
 
 
 class FollowDistanceDial:
