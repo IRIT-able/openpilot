@@ -111,7 +111,7 @@ class LongitudinalPlanner(LongitudinalPlannerSP):
   def update(self, sm):
     LongitudinalPlannerSP.update(self, sm)
     self._frame += 1
-    if self._is_preap and self._frame % 5 == 0:  # 4 Hz so the SCCM follow dial takes effect quickly
+    if self._is_preap:  # every cycle (20 Hz) so the SCCM follow dial takes effect immediately
       self.nap_follow_dist = self._params.get("NAPFollowDistance", return_default=True)
       self.nap_adaptive_accel = self._params.get_bool("NAPAdaptiveAccel")
 

@@ -1,7 +1,7 @@
 """NAP follow distance badge, drawn under the MAX set speed box on Pre-AP Teslas.
 
-Reads NAPFollowDistance directly (~10 Hz) so a dial or settings change shows up
-as soon as it is stored; plannerd picks the same value up within 0.25 s.
+Reads NAPFollowDistance directly (~20 Hz) so a dial or settings change shows up
+as soon as it is stored; plannerd re-reads the same value every cycle.
 """
 import pyray as rl
 
@@ -15,7 +15,7 @@ from openpilot.system.ui.lib.text_measure import measure_text_cached
 from openpilot.system.ui.widgets import Widget
 
 LEVELS = 7
-POLL_HZ = 10
+POLL_HZ = 20
 HIGHLIGHT_S = 2.0
 
 BOX_HEIGHT = 96

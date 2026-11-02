@@ -578,11 +578,11 @@ class NAPLayout(Widget):
       self._scroller.render(rect)
 
   def _update_state(self):
-    # The SCCM follow dial writes NAPFollowDistance while onroad; follow it live (~5 Hz)
+    # The SCCM follow dial writes NAPFollowDistance while onroad; follow it live (~20 Hz)
     if self._page != "main" or not ui_state.started:
       return
     self._follow_poll_frame += 1
-    if self._follow_poll_frame >= gui_app.target_fps // 5:
+    if self._follow_poll_frame >= gui_app.target_fps // 20:
       self._follow_poll_frame = 0
       self._refresh_follow_distance()
 

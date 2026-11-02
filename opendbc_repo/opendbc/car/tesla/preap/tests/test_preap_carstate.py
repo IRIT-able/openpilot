@@ -149,7 +149,7 @@ class TestPreAPCarStateUpdate(unittest.TestCase):
         CS = CI.update(packets)
         self.assertEqual(CS.turnSignalStalkState, expected)
 
-  def test_follow_dial_writes_only_settled_driver_changes(self):
+  def test_follow_dial_writes_only_driver_changes(self):
     CI = self._make_interface()
 
     def dial(dtr_dist, t_s):
@@ -161,17 +161,14 @@ class TestPreAPCarStateUpdate(unittest.TestCase):
       dial(0, 1.1)
       params.put.assert_not_called()
 
-      dial(100, 1.2)  # rolled through 2-3 to 4, then held
-      dial(66, 1.3)
-      dial(100, 1.4)
-      params.put.assert_not_called()
-      dial(100, 1.5)
+      dial(100, 1.2)
       params.put.assert_called_once_with("NAPFollowDistance", 4)
-
-      dial(100, 2.5)
-      dial(255, 2.6)  # SNA
-      dial(255, 3.0)
+      dial(100, 1.3)
+      dial(255, 1.4)  # SNA
       params.put.assert_called_once()
+      dial(66, 1.5)
+      params.put.assert_called_with("NAPFollowDistance", 3)
+      self.assertEqual(params.put.call_count, 2)
 
   def test_internal_brake_signal_ors_both_raw_sources_while_public_signal_stays_suppressed(self):
     CI = self._make_interface()
