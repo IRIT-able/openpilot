@@ -1,12 +1,10 @@
 """NAP follow distance badge, drawn under the MAX set speed box on Pre-AP Teslas.
 
-Reads NAPFollowDistance directly (~20 Hz) so a dial or settings change shows up
-as soon as it is stored; plannerd re-reads the same value every cycle.
+Shows the follow distance plannerd is using (longitudinalPlan.napFollowDistance),
+which follows the SCCM dial live through carState with no param I/O.
 """
 import pyray as rl
 
-from opendbc.car.tesla.preap.nap_params import NAPParamKeys
-from openpilot.common.params import Params
 from openpilot.selfdrive.ui.onroad.hud_renderer import UI_CONFIG, COLORS
 from openpilot.selfdrive.ui.ui_state import ui_state, UIStatus
 from openpilot.system.ui.lib.application import gui_app, FontWeight
@@ -15,7 +13,6 @@ from openpilot.system.ui.lib.text_measure import measure_text_cached
 from openpilot.system.ui.widgets import Widget
 
 LEVELS = 7
-POLL_HZ = 20
 HIGHLIGHT_S = 2.0
 
 BOX_HEIGHT = 96
@@ -29,8 +26,6 @@ class FollowDistanceRenderer(Widget):
   def __init__(self):
     super().__init__()
     self.level: int | None = None
-    self._params = Params()
-    self._poll_frame = 0
     self._highlight_frames = 0
     self._font = gui_app.font(FontWeight.SEMI_BOLD)
 
@@ -40,14 +35,13 @@ class FollowDistanceRenderer(Widget):
       self.level = None
       return
 
-    self._poll_frame += 1
-    if self.level is None or self._poll_frame >= gui_app.target_fps // POLL_HZ:
-      self._poll_frame = 0
-      level = int(self._params.get(NAPParamKeys.FOLLOW_DISTANCE, return_default=True) or 4)
-      level = max(1, min(LEVELS, level))
-      if self.level is not None and level != self.level:
-        self._highlight_frames = int(HIGHLIGHT_S * gui_app.target_fps)
-      self.level = level
+    sm = ui_state.sm
+    if sm.updated["longitudinalPlan"]:
+      level = sm["longitudinalPlan"].napFollowDistance
+      if 1 <= level <= LEVELS:
+        if self.level is not None and level != self.level:
+          self._highlight_frames = int(HIGHLIGHT_S * gui_app.target_fps)
+        self.level = level
 
     if self._highlight_frames > 0:
       self._highlight_frames -= 1

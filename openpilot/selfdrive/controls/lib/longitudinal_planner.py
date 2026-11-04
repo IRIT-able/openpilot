@@ -97,6 +97,8 @@ class LongitudinalPlanner(LongitudinalPlannerSP):
     self.active_nap_follow_dist = self.nap_follow_dist if self._is_preap and self.nap_follow_dist in NAP_FOLLOW_DISTANCE_RANGE else None
     self.t_follow = get_T_FOLLOW(nap_follow_dist=self.active_nap_follow_dist)
     self._frame = 0
+    self._last_nap_param = self.nap_follow_dist
+    self._last_nap_dial = 0
 
     self.a_desired = init_a
     self.v_desired_filter = FirstOrderFilter(init_v, 2.0, self.dt)
@@ -111,9 +113,20 @@ class LongitudinalPlanner(LongitudinalPlannerSP):
   def update(self, sm):
     LongitudinalPlannerSP.update(self, sm)
     self._frame += 1
-    if self._is_preap:  # every cycle (20 Hz) so the SCCM follow dial takes effect immediately
-      self.nap_follow_dist = self._params.get("NAPFollowDistance", return_default=True)
-      self.nap_adaptive_accel = self._params.get_bool("NAPAdaptiveAccel")
+    if self._is_preap:
+      # Most recent change wins: the SCCM dial arrives live in carState (no param I/O),
+      # NAP settings changes via NAPFollowDistance, which is polled at 1 Hz
+      nap_dial = sm['carState'].napFollowDial
+      if nap_dial != self._last_nap_dial:
+        self._last_nap_dial = nap_dial
+        if nap_dial in NAP_FOLLOW_DISTANCE_RANGE:
+          self.nap_follow_dist = nap_dial
+      if self._frame % 20 == 0:
+        nap_param = self._params.get("NAPFollowDistance", return_default=True)
+        if nap_param != self._last_nap_param:
+          self._last_nap_param = nap_param
+          self.nap_follow_dist = nap_param
+        self.nap_adaptive_accel = self._params.get_bool("NAPAdaptiveAccel")
 
     if len(sm['carControl'].orientationNED) == 3:
       accel_coast = get_coast_accel(sm['carControl'].orientationNED[1])

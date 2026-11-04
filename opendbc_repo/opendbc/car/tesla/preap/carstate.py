@@ -120,12 +120,14 @@ def update_preap(cs, can_parsers):
   cs.cruise_buttons = int(cp_chassis.vl["STW_ACTN_RQ"]["SpdCtrlLvr_Stat"])
   cs.msg_stw_actn_req = copy.copy(cp_chassis.vl["STW_ACTN_RQ"])
 
-  # Follow distance dial: only a driver-moved, settled position overrides the NAP setting
+  # Follow distance dial: published live; persisted only in Park (see follow_dial.py)
+  dial_ts = cp_chassis.ts_nanos["STW_ACTN_RQ"]["DTR_Dist_Rq"]
+  cs.follow_dial.update(int(cp_chassis.vl["STW_ACTN_RQ"]["DTR_Dist_Rq"]), dial_ts)
+  ret.napFollowDial = cs.follow_dial.level
   if _nap_params is not None:
-    dial_follow = cs.follow_dial.update(int(cp_chassis.vl["STW_ACTN_RQ"]["DTR_Dist_Rq"]),
-                                        cp_chassis.ts_nanos["STW_ACTN_RQ"]["DTR_Dist_Rq"])
-    if dial_follow is not None:
-      _nap_params.put(NAPParamKeys.FOLLOW_DISTANCE, dial_follow)
+    dial_save = cs.follow_dial.take_save(ret.gearShifter == structs.CarState.GearShifter.park, dial_ts)
+    if dial_save is not None:
+      _nap_params.put(NAPParamKeys.FOLLOW_DISTANCE, dial_save)
 
   curr_time_ms = _current_time_millis()
   use_pedal = nap_conf.use_pedal

@@ -591,3 +591,22 @@ def test_plant_aligned_full_closed_loop_grade_compensation_holds_speed(monkeypat
     assert np.mean(np.abs(
       accelerations_mps2[tracking_window] - vdas_targets_mps2[tracking_window]
     )) <= 0.12
+
+
+def test_planner_follows_live_sccm_dial_and_later_setting_changes():
+  params = _MutablePlannerParams(nap_follow_dist=4)
+  planner = LongitudinalPlanner(_make_preap_params(), _cp_sp(), init_v=FOLLOW_TEST_SPEED_MPS, params=params)
+  inputs = _make_planner_inputs(FOLLOW_TEST_SPEED_MPS)
+
+  planner._frame = 1  # not a param poll cycle
+  inputs["carState"].napFollowDial = 6
+  planner.update(inputs)
+  assert planner.active_nap_follow_dist == 6  # dial applies on the same cycle, no param read
+
+  params.nap_follow_dist = 2  # NAP settings changed after the dial
+  planner._frame = 19
+  planner.update(inputs)
+  assert planner.active_nap_follow_dist == 2
+
+  planner.update(inputs)  # unchanged dial does not override the newer setting
+  assert planner.active_nap_follow_dist == 2

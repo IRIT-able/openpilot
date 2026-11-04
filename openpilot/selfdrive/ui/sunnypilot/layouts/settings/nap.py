@@ -112,7 +112,7 @@ class NAPLayout(Widget):
     self._radar_scroller = Scroller(self._radar_items, line_separator=True, spacing=0)
     self._radar_back_btn = Button(tr("Back"), click_callback=self._close_radar)
     self._radar_back_btn.set_rect(rl.Rectangle(0, 0, 220, 90))
-    self._follow_poll_frame = 0
+    self._follow_tap_time = -10.0
 
   def _build_items(self):
     self._main_items = []
@@ -384,6 +384,7 @@ class NAPLayout(Widget):
 
   def _on_follow_distance(self, index: int):
     self._params.put(NAPParamKeys.FOLLOW_DISTANCE, index + 1)
+    self._follow_tap_time = rl.get_time()  # plannerd polls the setting at 1 Hz
 
   def _on_pedal_can_bus(self, index: int):
     self._params.put(NAPParamKeys.PEDAL_CAN_BUS, PEDAL_CAN_BUS_VALUES[index])
@@ -578,13 +579,14 @@ class NAPLayout(Widget):
       self._scroller.render(rect)
 
   def _update_state(self):
-    # The SCCM follow dial writes NAPFollowDistance while onroad; follow it live (~20 Hz)
-    if self._page != "main" or not ui_state.started:
+    # Onroad, show the follow distance plannerd is using (SCCM dial or setting), no param reads
+    if self._page != "main" or not ui_state.started or not ui_state.sm.updated["longitudinalPlan"]:
       return
-    self._follow_poll_frame += 1
-    if self._follow_poll_frame >= gui_app.target_fps // 20:
-      self._follow_poll_frame = 0
-      self._refresh_follow_distance()
+    if rl.get_time() - self._follow_tap_time < 1.5:  # don't flick back before plannerd sees a tap
+      return
+    follow_dist = ui_state.sm["longitudinalPlan"].napFollowDistance
+    if 1 <= follow_dist <= 7 and self._follow_buttons.action_item.get_selected_button() != follow_dist - 1:
+      self._follow_buttons.action_item.set_selected_button(follow_dist - 1)
 
   def show_event(self):
     self._page = "main"

@@ -149,25 +149,37 @@ class TestPreAPCarStateUpdate(unittest.TestCase):
         CS = CI.update(packets)
         self.assertEqual(CS.turnSignalStalkState, expected)
 
-  def test_follow_dial_writes_only_driver_changes(self):
+  def test_follow_dial_is_live_in_carstate_and_saved_only_in_park(self):
     CI = self._make_interface()
+    packer = CANPacker("tesla_preap")
 
-    def dial(dtr_dist, t_s):
-      address, dat, bus = CANPacker("tesla_preap").make_can_msg("STW_ACTN_RQ", 0, {"DTR_Dist_Rq": dtr_dist})
-      CI.update([(int(t_s * 1e9), [CanData(address, dat, bus)])])
+    def dial(dtr_dist, t_s, gear=4):  # DI_gear 4 = D, 1 = P
+      frames = [CanData(*packer.make_can_msg("STW_ACTN_RQ", 0, {"DTR_Dist_Rq": dtr_dist})),
+                CanData(*packer.make_can_msg("DI_torque2", 0, {"DI_gear": gear}))]
+      CS, _ = CI.update([(int(t_s * 1e9), frames)])
+      return CS.napFollowDial
 
     with patch("opendbc.car.tesla.preap.carstate._nap_params") as params:
-      dial(0, 1.0)  # resting position at startup must not override the NAP setting
-      dial(0, 1.1)
-      params.put.assert_not_called()
+      self.assertEqual(dial(0, 1.0), 0)  # resting position at startup does not take over
+      self.assertEqual(dial(0, 1.1), 0)
 
-      dial(100, 1.2)
-      params.put.assert_called_once_with("NAPFollowDistance", 4)
-      dial(100, 1.3)
-      dial(255, 1.4)  # SNA
+      self.assertEqual(dial(100, 1.2), 4)  # live immediately while driving...
+      self.assertEqual(dial(66, 1.3), 3)
+      self.assertEqual(dial(255, 1.4), 3)  # SNA keeps the last level
+      for t in range(15, 60):
+        dial(66, t / 10)
+      params.put.assert_not_called()  # ...but never written to params while driving
+
+      dial(66, 6.0, gear=1)  # in Park and still for 2 s+: saved once
+      params.put.assert_called_once_with("NAPFollowDistance", 3)
+      dial(66, 6.5, gear=1)
       params.put.assert_called_once()
-      dial(66, 1.5)
-      params.put.assert_called_with("NAPFollowDistance", 3)
+
+      self.assertEqual(dial(133, 7.0, gear=1), 5)  # moved in Park: saved after 2 s still
+      dial(133, 8.0, gear=1)
+      params.put.assert_called_once()
+      dial(133, 9.1, gear=1)
+      params.put.assert_called_with("NAPFollowDistance", 5)
       self.assertEqual(params.put.call_count, 2)
 
   def test_internal_brake_signal_ors_both_raw_sources_while_public_signal_stays_suppressed(self):

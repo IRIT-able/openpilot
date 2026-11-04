@@ -221,6 +221,7 @@ struct CarState {
   pedalCommandDi @76 :Float32;  # NAP: controller DI-domain command/seed; RESET wire frames carry zero
   pedalAuthorityFailed @77 :Bool;  # NAP: bounded pedal authority acquisition failed
   enableLongControl @78 :Bool;  # Pre-AP: FSM longitudinal intent; survives gas override
+  napFollowDial @79 :UInt8;  # NAP: SCCM follow dial level 1-7 once the driver moved it this drive, else 0
 
   # cruise state
   cruiseState @10 :CruiseState;

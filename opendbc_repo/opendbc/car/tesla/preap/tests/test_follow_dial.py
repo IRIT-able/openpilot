@@ -35,6 +35,23 @@ class TestFollowDistanceDial(unittest.TestCase):
     writes = [dial.update(dtr, t * 100 * MS) for t, dtr in enumerate((33, 66, 66, 100, 100, 66), start=1)]
     self.assertEqual(writes, [2, 3, None, 4, None, 3])
 
+  def test_level_is_zero_until_driver_moves_dial(self):
+    dial = FollowDistanceDial()
+    dial.update(200, 1 * MS)
+    self.assertEqual(dial.level, 0)
+    dial.update(166, 100 * MS)
+    self.assertEqual(dial.level, 6)
+
+  def test_save_only_in_park_after_dial_is_still(self):
+    dial = FollowDistanceDial()
+    dial.update(0, 1 * MS)
+    self.assertIsNone(dial.take_save(True, 10_000 * MS))  # never moved: nothing to save
+    dial.update(100, 1000 * MS)
+    self.assertIsNone(dial.take_save(False, 9000 * MS))  # driving
+    self.assertIsNone(dial.take_save(True, 2900 * MS))  # parked, still < 2 s
+    self.assertEqual(dial.take_save(True, 3000 * MS), 4)
+    self.assertIsNone(dial.take_save(True, 4000 * MS))  # saved once
+
   def test_debounce_writes_only_settled_position(self):
     dial = FollowDistanceDial(debounce_ns=200 * MS)
     dial.update(0, 1)
