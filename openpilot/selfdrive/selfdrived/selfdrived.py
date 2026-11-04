@@ -725,7 +725,9 @@ class SelfdriveD(CruiseHelper):
 
 
 def main():
-  config_realtime_process(4, Priority.CTRL_HIGH)
+  # Pre-AP card + controlsd + selfdrived saturate core 4 (~100%), starving its kernel
+  # workqueue (lockups/RCU stalls freeze hardwared -> commIssue). Core 6 only has camerad (~10%).
+  config_realtime_process(6, Priority.CTRL_HIGH)
   s = SelfdriveD()
   s.run()
 
